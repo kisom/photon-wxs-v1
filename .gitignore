@@ -1,1 +1,3 @@
 *.bin
+src/*.gch
+# src/ap.h

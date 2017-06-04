@@ -7,8 +7,10 @@
 
 #include <cstdio>
 #include <cstdint>
+#include <cstdlib>
 
 #include "wxs.h"
+#include "ap.h"
 #include "SI7020.h"
 #include "CPS120.h"
 
@@ -24,7 +26,7 @@ CPS120 barometer;
 
 // The encoded buffers will need to contain our three (double) measurements,
 // the (int) timestamp, and the (int) last error code.
-constexpr encodedSize = 2 * sizeof(weather);
+constexpr size_t	encodedSize = 2 * sizeof(weather);
 
 void
 hexDigit(uint8_t c, uint8_t *out)
@@ -63,17 +65,17 @@ publishMeasurements(void)
 	uint8_t	 encoded[encodedSize + 1] = {0};
 	uint8_t *wxBytes = reinterpret_cast<uint8_t *>(&weather);
 
-	for (auto i = 0; i < sizeof(encodedSize); i++) {
-		hexDigit(wxBytes+i, encoded[i*2]);
+	for (auto i = 0; i < sizeof(weather); i++) {
+		hexDigit(*(wxBytes+i), encoded + (i*2));
 	}
 
-	Particle.publish("kisom/wxs/v1/measurements", encoded, 900, PUBLIC, WITH_ACK);
+	Particle.publish("kisom/wxs/v1/measurements",
+		reinterpret_cast<const char *>(encoded), 900, PUBLIC);
 }
 
 int
 takeMeasurements(String unused)
 {
-	MSG("taking sensor measurements");
 	weather.Updated = Time.now();
 	if (!tempSensor.Update()) {
 		MSG("failed to update temperature");
@@ -90,7 +92,6 @@ takeMeasurements(String unused)
 	}
 	weather.AirPressure = barometer.Pressure();
 
-	MSG("sensor update complete");
 	publishMeasurements();
 	return 0;
 }
@@ -118,14 +119,15 @@ void
 loop()
 {
 	takeMeasurements("");
-	Particle.publish("kisom/wxs/v1/wakeup", "", 30, PUBLIC);
+	Particle.publish("kisom/wxs/v1/wakeup", NULL, 30, PUBLIC);
 
 	// Stay awake for one minute afterwards to give the system time to
 	// flush pending messages. This also gives us time to kick off a
 	// firmware update.
-	delay(60000);
+	delay(50000);
+	Particle.publish("kisom/wxs/v1/sleep", NULL, 10000);
 
 	// Go into deep sleep for 14 minutes --- this gives us roughly 15
 	// minutes between measurements.
-	System.sleep(SLEEP_MODE_DEEP, 900000);
+	System.sleep(SLEEP_MODE_DEEP, 840);
 }
