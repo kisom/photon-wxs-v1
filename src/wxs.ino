@@ -19,6 +19,57 @@ Reading	weather;
 SI2070 tempSensor;
 CPS120 barometer;
 
+// This is janky, but done for reasons of low power, and because I don't
+// want to deal with OAuth.
+
+// The encoded buffers will need to contain our three (double) measurements,
+// the (int) timestamp, and the (int) last error code.
+constexpr encodedSize = 2 * sizeof(weather);
+
+void
+hexDigit(uint8_t c, uint8_t *out)
+{
+        uint8_t tmp = (c >> 4) & 0xF;
+        if (tmp < 10) {
+                tmp += 0x30;
+        }
+        else {
+		// += 0x37 is equivalent to:
+		// tmp -= 10; tmp += 0x41;
+                tmp += 0x37;
+        }
+        *out = tmp;
+
+        tmp = c & 0x0F;
+        if (tmp < 10) {
+                tmp += 0x30;
+        }
+        else {
+                tmp += 0x37;
+        }
+        *(out + 1) = tmp;
+}
+
+void
+publishMeasurements(void)
+{
+	// Warn if our sensor readings get too big fer their britches --- or
+	// to be published as a Particle message.
+	if (encodedSize > 255) {
+		Particle.publish("kisom/wxs/v1/warnings", "encodedSize > 255 (c.f. publishMeasurements)",
+			3600, PRIVATE);
+		return;
+	}
+	uint8_t	 encoded[encodedSize + 1] = {0};
+	uint8_t *wxBytes = reinterpret_cast<uint8_t *>(&weather);
+
+	for (auto i = 0; i < sizeof(encodedSize); i++) {
+		hexDigit(wxBytes+i, encoded[i*2]);
+	}
+
+	Particle.publish("kisom/wxs/v1/measurements", encoded, 900, PUBLIC, WITH_ACK);
+}
+
 int
 takeMeasurements(String unused)
 {
@@ -40,11 +91,14 @@ takeMeasurements(String unused)
 	weather.AirPressure = barometer.Pressure();
 
 	MSG("sensor update complete");
+	publishMeasurements();
 	return 0;
 }
 
 // setup() runs once, when the device is first turned on.
-void setup() {
+void
+setup()
+{
 	Particle.variable("temperature", weather.Temperature);
 	Particle.variable("humidity", weather.Humidity);
 	Particle.variable("airPressure", weather.AirPressure);
@@ -53,10 +107,25 @@ void setup() {
 
 	// Allow manual updates.
 	Particle.function("update", takeMeasurements);
+
+	while (!WiFi.ready()) {
+		delay(250);
+	}
 }
 
 // loop() runs over and over again, as quickly as it can execute.
-void loop() {
+void
+loop()
+{
 	takeMeasurements("");
-	delay(900000);
+	Particle.publish("kisom/wxs/v1/wakeup", "", 30, PUBLIC);
+
+	// Stay awake for one minute afterwards to give the system time to
+	// flush pending messages. This also gives us time to kick off a
+	// firmware update.
+	delay(60000);
+
+	// Go into deep sleep for 14 minutes --- this gives us roughly 15
+	// minutes between measurements.
+	System.sleep(SLEEP_MODE_DEEP, 900000);
 }
