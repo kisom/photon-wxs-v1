@@ -76,9 +76,12 @@ publishMeasurements(void)
 int
 takeMeasurements(String unused)
 {
+	char err[32];
 	weather.Updated = Time.now();
 	if (!tempSensor.Update()) {
-		MSG("failed to update temperature");
+		sprintf(err, "failed to update temperature: %d",
+			tempSensor.ErrorCode());
+		MSG(err);
 		weather.Error = tempSensor.ErrorCode();
 		return -1;
 	}
@@ -86,7 +89,9 @@ takeMeasurements(String unused)
 	weather.Humidity = tempSensor.RelativeHumidity();
 
 	if (!barometer.Update()) {
-		MSG("failed to update pressure");
+		sprintf(err, "failed to update pressure: %d",
+			barometer.ErrorCode());
+		MSG(err);
 		weather.Error = barometer.ErrorCode();
 		return -1;
 	}
