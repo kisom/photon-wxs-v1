@@ -8,9 +8,9 @@
 #include <cstdio>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 #include "wxs.h"
-#include "ap.h"
 #include "SI7020.h"
 #include "CPS120.h"
 
@@ -22,7 +22,7 @@ SI2070 tempSensor;
 CPS120 barometer;
 
 // This is janky, but done for reasons of low power, and because I don't
-// want to deal with OAuth.
+// want to deal with OAuth: instead, I'll just do this via a webhook.
 
 // The encoded buffers will need to contain our three (double) measurements,
 // the (int) timestamp, and the (int) last error code.
@@ -65,7 +65,7 @@ publishMeasurements(void)
 	uint8_t	 encoded[encodedSize + 1] = {0};
 	uint8_t *wxBytes = reinterpret_cast<uint8_t *>(&weather);
 
-	for (auto i = 0; i < sizeof(weather); i++) {
+	for (size_t i = 0; i < sizeof(weather); i++) {
 		hexDigit(*(wxBytes+i), encoded + (i*2));
 	}
 
@@ -100,18 +100,13 @@ takeMeasurements(String unused)
 void
 setup()
 {
-	Particle.variable("temperature", weather.Temperature);
-	Particle.variable("humidity", weather.Humidity);
-	Particle.variable("airPressure", weather.AirPressure);
-	Particle.variable("updatedAt", weather.Updated);
-	Particle.variable("sensorError", weather.Error);
-
-	// Allow manual updates.
-	Particle.function("update", takeMeasurements);
-
-	while (!WiFi.ready()) {
-		delay(250);
-	}
+	// There's not much to do in the setup loop. The first
+	// iteration had cloud variables and functions, but
+	// those turned out to be not very useful. The variables
+	// were only available when the device is online, and for
+	// reasons of power consumption, I've tried to minimise the
+	// time the device is awake. Now, the idea is webhook +
+	// published message. The future might be MQTT.
 }
 
 // loop() runs over and over again, as quickly as it can execute.
