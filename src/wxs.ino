@@ -118,8 +118,8 @@ setup()
 void
 loop()
 {
-	takeMeasurements("");
 	Particle.publish("kisom/wxs/v1/wakeup", NULL, 30, PUBLIC);
+	takeMeasurements("");
 
 	// Stay awake for one minute afterwards to give the system time to
 	// flush pending messages. This also gives us time to kick off a
