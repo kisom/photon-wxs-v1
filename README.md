@@ -10,8 +10,10 @@ the following sensors connected to an I²C module:
 
 Currently, only the Si7020 and CPS120 are active.
 
-Power is provided by a Sparkfun Sunny Buddy that uses a 2.5W solar panel to
-charge a 3.7V 2Ah LiPo battery.
+Power is provided by a Particle power shield that uses a 6W solar panel to
+charge a 3.7V 2Ah LiPo battery. The solar panel came from the
+[discontinued](https://community.particle.io/t/what-happened-to-the-solar-shield-kit/23967)
+solar shield kit.
 
 ## References
 
@@ -20,7 +22,7 @@ charge a 3.7V 2Ah LiPo battery.
 + [MAG310](https://shop.controleverything.com/products/3-axis-digital-magnetometer-electronic-compass?variant=25687552331)
 + [Si1132](https://shop.controleverything.com/products/uv-index-ambient-light-sensor?variant=25687570507)
 + [I²C shield](https://shop.controleverything.com/products/i2c-breakout-for-particle-photon?variant=25687320587)
-+ [Sunny Buddy](https://www.sparkfun.com/products/12885)
++ [power shield](https://www.sparkfun.com/products/12885)
 + [battery](https://www.sparkfun.com/products/8483)
 + [solar cell](https://www.sparkfun.com/products/retired/7840)
 
@@ -28,6 +30,8 @@ charge a 3.7V 2Ah LiPo battery.
 
 + Upgrade to the following:
 
-  + [3.5W solar panel](https://www.sparkfun.com/products/13782)
   + [SparkFun weather shield](https://www.sparkfun.com/products/13674)
   + [Weather meters](https://www.sparkfun.com/products/8942)
+
++ I'd like to integrate this with a HamShield at some point to enable APRS
+  functionality.
