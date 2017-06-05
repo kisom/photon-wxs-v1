@@ -13,6 +13,7 @@
 #include "wxs.h"
 #include "SI7020.h"
 #include "CPS120.h"
+#include "PowerShield.h"
 
 #define TOPIC	"kisom/wxs/v1/messages"
 #define MSG(m)	Particle.publish(TOPIC, (m), 3600, PRIVATE)
@@ -20,6 +21,7 @@
 Reading	weather;
 SI2070 tempSensor;
 CPS120 barometer;
+PowerShield battery;
 
 // This is janky, but done for reasons of low power, and because I don't
 // want to deal with OAuth: instead, I'll just do this via a webhook.
@@ -97,6 +99,10 @@ takeMeasurements(String unused)
 	}
 	weather.AirPressure = barometer.Pressure();
 
+	// Add power readings.
+	weather.Voltage = battery.getVCell();
+	weather.Charge = battery.getSoC();
+
 	publishMeasurements();
 	return 0;
 }
@@ -112,6 +118,8 @@ setup()
 	// reasons of power consumption, I've tried to minimise the
 	// time the device is awake. Now, the idea is webhook +
 	// published message. The future might be MQTT.
+	battery.begin();
+        battery.quickStart();
 }
 
 // loop() runs over and over again, as quickly as it can execute.
