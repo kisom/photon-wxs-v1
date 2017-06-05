@@ -2,6 +2,9 @@
 #include "spark_wiring_i2c.h"
 #include "spark_wiring_constants.h"
 
+// How many bytes should be requested using requestFrom?
+static const uint8_t	readBytes = 2;
+
 bool
 SI2070::takeMeasurement(uint8_t reg, uint16_t &target)
 {
@@ -21,8 +24,8 @@ SI2070::takeMeasurement(uint8_t reg, uint16_t &target)
 		return false;
 	}
 
-	uint16_t data[2];
-	Wire.requestFrom(addr, 2); // Readings are 16-bit.
+	uint16_t data[2]; // Use 16-bit to make sure the shift works properly.
+	Wire.requestFrom(addr, readBytes); // Readings are 16-bit.
 	data[0] = Wire.read() & 0x00FF;
 	data[1] = Wire.read() & 0x00FF;
 	target = (data[0] << 8) + data[1];
